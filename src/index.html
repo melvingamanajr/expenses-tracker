@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h2>Expenses Tracker</h2>
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="theme-toggle">
+                <input type="checkbox" id="theme-toggle" />
+                <div class="slider round"></div>
+            </label>
+        </div>
+    </header>
+
+    <div class="container">
+        <main class="main-content">
+            <!-- Left Column -->
+            <div class="column">
+                <section class="balance-container" aria-labelledby="balance-heading">
+                    <h4>Your Balance</h4>
+                    <h2 id="balance">$0.00</h2>
+                </section>
+        
+                <section class="inc-exp-container" aria-label="Income and Expense Summary">
+                    <div>
+                        <h4>Income</h4>
+                        <p id="money-plus" class="money plus">$+0.00</p>
+                    </div>
+                    <div>
+                        <h4>Expense</h4>
+                        <p id="money-minus" class="money minus">$-0.00</p>
+                    </div>
+                </section>
+        
+                <section class="chart-container" aria-label="Expense Chart">
+                    <h3>Expense Breakdown</h3>
+                    <canvas id="expense-chart"></canvas>
+                </section>
+        
+                <button id="show-add-tx-modal-btn" class="btn btn-primary">Add New Transaction</button>
+            </div>
+    
+            <!-- Right Column -->
+            <div class="column">
+                <section aria-labelledby="filters-heading">
+                    <h3 id="filters-heading">Filters</h3>
+                    <div class="filter-container">
+                        <div class="form-control">
+                            <label for="filter-category">Filter by Category</label>
+                            <select id="filter-category">
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label for="filter-date-start">Start Date</label>
+                            <input type="date" id="filter-date-start">
+                        </div>
+                        <div class="button-group">
+                            <button id="reset-filters-btn" class="btn btn-secondary">Reset Filters</button>
+                            <button id="clear-all-btn" class="btn btn-danger">Clear All Data</button>
+                            <button id="export-csv-btn" class="btn">Export to CSV</button>
+                        </div>
+                    </div>
+                </section>
+        
+                <section aria-labelledby="history-heading">
+                    <div class="history-header">
+                        <h3 id="history-heading">History</h3>
+                        <button id="sort-btn" class="icon-btn" aria-label="Sort by date">↑↓</button>
+                    </div>
+                    <div id="no-transactions-message" class="no-transactions-message" style="display: none;">No transactions found.</div>
+                    <div id="spinner" class="spinner-container" style="display: none;"><div class="spinner"></div></div>
+                    <ul id="list" class="list">
+                        <!-- Transactions will be dynamically inserted here by JavaScript -->
+                    </ul>
+            
+                    <div id="pagination-container" class="pagination-container">
+                        <button id="prev-btn" class="btn page-btn">Previous</button>
+                        <span id="page-info" aria-live="polite"></span>
+                        <button id="next-btn" class="btn page-btn">Next</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="add-tx-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-heading">
+        <div class="modal-content">
+            <button class="close-btn" aria-label="Close add dialog">&times;</button>
+            <h3 id="add-modal-heading">Add New Transaction</h3>
+            <form id="form">
+                <div class="form-control">
+                    <label for="add-text">Description</label>
+                    <input type="text" id="add-text" placeholder="Enter description..." required>
+                </div>
+                <div class="form-control">
+                    <label for="add-category">Category</label>
+                    <select id="add-category" required>
+                        <option value="" disabled selected>Select category</option>
+                        <option value="food">Food</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="transport">Transport</option>
+                        <option value="income">Income</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label for="add-amount">Amount</label>
+                    <input type="number" id="add-amount" placeholder="Enter amount..." required>
+                </div>
+                <button class="btn">Add Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-heading">
+        <div class="modal-content">
+            <button class="close-btn" aria-label="Close edit dialog">&times;</button>
+            <h3 id="edit-modal-heading">Edit Transaction</h3>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-control">
+                    <label for="edit-text">Description</label>
+                    <input type="text" id="edit-text" required>
+                </div>
+                <div class="form-control">
+                    <label for="edit-category">Category</label>
+                    <select id="edit-category" required>
+                        <!-- Options will be populated by JS -->
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label for="edit-amount">Amount</label>
+                    <input type="number" id="edit-amount" required>
+                </div>
+                <button class="btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-heading">
+        <div class="modal-content">
+            <h3 id="delete-modal-heading">Confirm Deletion</h3>
+            <p>Are you sure you want to delete this transaction? This action cannot be undone.</p>
+            <div class="button-group">
+                <button id="cancel-delete-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-delete-btn" class="btn btn-danger">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear All Confirmation Modal -->
+    <div id="clear-all-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-all-modal-heading">
+        <div class="modal-content">
+            <h3 id="clear-all-modal-heading">Clear All Application Data?</h3>
+            <p>Are you sure you want to delete all transactions? This action is permanent and cannot be undone.</p>
+            <div class="button-group">
+                <button id="cancel-clear-all-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-clear-all-btn" class="btn btn-danger">Yes, Clear Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
